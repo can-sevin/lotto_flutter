@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lotto_flutter/screens/otp_screen.dart';
-import 'package:lotto_flutter/screens/register_screen.dart';
+import 'package:lotto_flutter/screens/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -19,7 +18,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
     Future.delayed(const Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (_) => const RegisterScreen()
+        builder: (_) => LoginScreen()
       ));
     });
   }
@@ -46,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         Align(
           alignment: Alignment.topLeft,
           child: Container (
-            margin: EdgeInsets.all(24.0),
+            margin: const EdgeInsets.all(24.0),
             child: Image.asset(
             'assets/images/looto_vertical.png',
             fit: BoxFit.none,
@@ -55,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         Align(
           alignment: Alignment.bottomCenter,
           child: Container (
-            margin: EdgeInsets.all(24.0),
+            margin: const EdgeInsets.all(24.0),
             child: Image.asset(
             'assets/images/splash_text.png',
             fit: BoxFit.none,

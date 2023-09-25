@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-
 import 'counter_time.dart';
 
 class OtpScreen extends StatelessWidget {
-  const OtpScreen({Key? key}) : super(key: key);
+  final String email; // Declare email as an instance variable
+  final Map<String, String>? responseBody; // Declare email as an instance variable
+  const OtpScreen(this.email, this.responseBody, {Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +31,7 @@ class OtpScreen extends StatelessWidget {
           child: Stack(
             alignment: Alignment.topCenter,
             children: [
-              const CountdownTimer(),
+              CountdownTimer(email, responseBody),
               Container(
                 alignment: const Alignment(0.0, 0.9),
                 child: Image.asset(

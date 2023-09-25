@@ -1,0 +1,1 @@
+const mainUrl = 'https://sea-turtle-app-qpyzd.ondigitalocean.app';

@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
+import 'package:logger/logger.dart';
+import '../constants.dart';
+
+import 'dart:convert';
 import 'dart:async';
 
 class CountdownTimer extends StatefulWidget {
-  const CountdownTimer({Key? key}) : super(key: key);
+  final String email; // Declare email as an instance variable
+  final Map<String, String>?
+      responseBody; // Declare email as an instance variable
+  final Logger logger = Logger();
+
+  CountdownTimer(this.email, this.responseBody, {Key? key}) : super(key: key);
 
   @override
   CountdownTimerState createState() => CountdownTimerState();
@@ -14,6 +24,88 @@ class CountdownTimerState extends State<CountdownTimer> {
   int _secondsRemaining = 180; // Initial time in seconds
   late Timer _timer;
   bool _resend = false;
+
+  void showErrorMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.red, // Customize the background color
+        duration: const Duration(seconds: 3), // Adjust the duration as needed
+      ),
+    );
+  }
+
+  Future<void> getOtpCode(
+      BuildContext context,
+      String email,
+      String name,
+      String lastName,
+      String phoneNumber,
+      String cityId,
+      String birthDate,
+      String otpCode) async {
+    final response = await http.post(
+      Uri.parse('$mainUrl/api/v1/auth/register/email/otp'),
+      body: jsonEncode(<String, String>{
+        'name': name,
+        'lastName': lastName,
+        'email': email,
+        'phoneNumber': phoneNumber,
+        'cityId': cityId,
+        'birthDate': birthDate,
+        "privacyPolicy": false.toString(),
+        "activated": false.toString(),
+        "otp": otpCode,
+      }),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+    );
+
+    final Map<String, dynamic> responseBody = json.decode(response.body);
+    final int code = responseBody['code'] as int;
+
+    final errorMessage =
+        responseBody['message'] as String; // Set your error message here
+    final success =
+        responseBody['success'] as bool; // Set your error message here
+
+    if (success) {
+    } else if ([2015, 2016, 2017, 2018, 2019, 2099, 2024].contains(code)) {
+      showErrorMessage(context, errorMessage);
+    }
+  }
+
+  Future<void> getOtpCodeEmail(
+      BuildContext context, String email, String otpCode) async {
+    final response = await http.post(
+      Uri.parse('$mainUrl/api/v1/auth/login/email/otp'),
+      body: jsonEncode(<String, String>{
+        'email': email,
+        'otp': otpCode,
+      }),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+    );
+
+    final Map<String, dynamic> responseBody = json.decode(response.body);
+    final int code = responseBody['code'] as int;
+
+    final errorMessage =
+        responseBody['message'] as String; // Set your error message here
+    final success =
+        responseBody['success'] as bool; // Set your error message here
+
+    if (success) {
+    } else if ([2015, 2016, 2017, 2018, 2019, 2023, 2026, 2099]
+        .contains(code)) {
+      showErrorMessage(context, errorMessage);
+    }
+  }
 
   final List<TextEditingController> _controllers =
       List.generate(4, (_) => TextEditingController());
@@ -47,10 +139,13 @@ class CountdownTimerState extends State<CountdownTimer> {
     super.dispose();
   }
 
+  String getAllTextFieldsValue() {
+    return _controllers.map((controller) => controller.text).join();
+  }
+
   @override
   Widget build(BuildContext context) {
     String formattedTime = (_secondsRemaining).toString().padLeft(2, '0');
-
     return Stack(
       children: [
         Row(
@@ -78,7 +173,6 @@ class CountdownTimerState extends State<CountdownTimer> {
                 ],
                 onChanged: (String value) {
                   if (value.isNotEmpty) {
-                    // When content is entered, focus on the next field
                     if (index < 3) {
                       FocusScope.of(context)
                           .requestFocus(_focusNodes[index + 1]);
@@ -148,13 +242,30 @@ class CountdownTimerState extends State<CountdownTimer> {
                         fontSize: 20),
                   ),
                 )
-              : SizedBox(
-                  width: 96,
-                  height: 96,
-                  child: Image.asset(
-                    'assets/images/tickcircle.png',
-                    fit: BoxFit.none,
-                  )),
+              : GestureDetector(
+                  onTap: () {
+                    // Your onPressed logic here
+                    // For example, you can navigate to a new screen or perform any action
+                    widget.responseBody == null
+                        ? getOtpCodeEmail(
+                            context, widget.email, getAllTextFieldsValue())
+                        : getOtpCode(
+                            context,
+                            widget.email,
+                            widget.responseBody!['name']!,
+                            widget.responseBody!['lastName']!,
+                            widget.responseBody!['phoneNumber']!,
+                            widget.responseBody!['cityId']!,
+                            widget.responseBody!['birthDate']!,
+                            getAllTextFieldsValue());
+                  },
+                  child: SizedBox(
+                      width: 96,
+                      height: 96,
+                      child: Image.asset(
+                        'assets/images/tickcircle.png',
+                        fit: BoxFit.none,
+                      ))),
         ),
         Align(
           alignment: Alignment.center,
@@ -179,7 +290,9 @@ class CountdownTimerState extends State<CountdownTimer> {
           alignment: const Alignment(0.0, 0.65),
           padding: const EdgeInsets.all(28),
           child: Text(
-            _resend ? 'Your time runned out ' : 'We sent a 4-digit code xxx@gmail.com check your mailbox',
+            _resend
+                ? 'Your time runned out'
+                : 'We sent a 4-digit code ${widget.email} check your mailbox',
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontFamily: 'Inter',
