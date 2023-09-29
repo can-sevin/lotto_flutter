@@ -67,7 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final errorMessage = responseBody['message'] as String; // Set your error message here
     final success = responseBody['success'] as bool; // Set your error message here
-    final int? code = success ? null : responseBody['code'] as int;
+    final int? code = responseBody['code'];
 
     if (success) {
       Navigator.of(context).pushReplacement(
@@ -109,6 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: <Widget>[
           Container(
@@ -262,7 +263,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           firstDate: DateTime(1990),
                           lastDate: DateTime(2005),
                         );
-
                         if (selectedDate != null) {
                           setState(() {
                             _birthdayController.text =

@@ -23,21 +23,25 @@ class LoginScreen extends StatelessWidget {
     );
 
     final Map<String, dynamic> responseBody = json.decode(response.body);
-    final int code = responseBody['code'] as int;
+    final success =
+        responseBody['success'] as bool; // Set your error message here
+    final int? code = responseBody['code'];
 
-    if (code == 2023) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => RegisterScreen(email)),
-      );
-    } else if ([2025, 2026].contains(code)) {
-      final errorMessage = responseBody['message'] as String; // Set your error message here
-      showErrorMessage(context, errorMessage);
-    } else if ([200, 2024].contains(code)) {
+    if (success) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => OtpScreen(email, null)),
       );
+    } else if ([2025, 2026].contains(code)) {
+      final errorMessage =
+          responseBody['message'] as String; // Set your error message here
+      showErrorMessage(context, errorMessage);
+    } else if ([2023].contains(code)) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => RegisterScreen(email)),
+      );
     } else if ([2009, 2010].contains(code)) {
-      final errorMessage = responseBody['message'] as String; // Set your error message here
+      final errorMessage =
+          responseBody['message'] as String; // Set your error message here
       showErrorMessage(context, errorMessage);
     }
   }
@@ -60,6 +64,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: <Widget>[
           Container(
@@ -100,7 +105,8 @@ class LoginScreen extends StatelessWidget {
                     if (email.isNotEmpty) {
                       await getOtpCode(context, email);
                     } else {
-                      const errorMessage = "Email line blank?"; // Set your error message here
+                      const errorMessage =
+                          "Email line blank?"; // Set your error message here
                       showErrorMessage(context, errorMessage);
                     }
                   },

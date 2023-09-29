@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:logger/logger.dart';
+import 'package:lotto_flutter/screens/home_screen.dart';
+import 'package:lotto_flutter/screens/login_screen.dart';
 import '../constants.dart';
 
 import 'dart:convert';
@@ -38,7 +40,20 @@ class CountdownTimerState extends State<CountdownTimer> {
     );
   }
 
-  Future<void> getOtpCode(
+  void showSendMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.green, // Customize the background color
+        duration: const Duration(seconds: 3), // Adjust the duration as needed
+      ),
+    );
+  }
+
+  Future<void> registerUser(
       BuildContext context,
       String email,
       String name,
@@ -49,42 +64,15 @@ class CountdownTimerState extends State<CountdownTimer> {
       String otpCode) async {
     final response = await http.post(
       Uri.parse('$mainUrl/api/v1/auth/register/email/otp'),
-      body: jsonEncode(<String, String>{
+      body: jsonEncode(<String, void>{
+        'email': email,
         'name': name,
         'lastName': lastName,
-        'email': email,
         'phoneNumber': phoneNumber,
         'cityId': cityId,
         'birthDate': birthDate,
-        "privacyPolicy": false.toString(),
-        "activated": false.toString(),
-        "otp": otpCode,
-      }),
-      headers: <String, String>{
-        'Content-Type': 'application/json',
-      },
-    );
-
-    final Map<String, dynamic> responseBody = json.decode(response.body);
-    final int code = responseBody['code'] as int;
-
-    final errorMessage =
-        responseBody['message'] as String; // Set your error message here
-    final success =
-        responseBody['success'] as bool; // Set your error message here
-
-    if (success) {
-    } else if ([2015, 2016, 2017, 2018, 2019, 2099, 2024].contains(code)) {
-      showErrorMessage(context, errorMessage);
-    }
-  }
-
-  Future<void> getOtpCodeEmail(
-      BuildContext context, String email, String otpCode) async {
-    final response = await http.post(
-      Uri.parse('$mainUrl/api/v1/auth/login/email/otp'),
-      body: jsonEncode(<String, String>{
-        'email': email,
+        'privacyPolicy': false,
+        'activated': false,
         'otp': otpCode,
       }),
       headers: <String, String>{
@@ -101,8 +89,86 @@ class CountdownTimerState extends State<CountdownTimer> {
         responseBody['success'] as bool; // Set your error message here
 
     if (success) {
-    } else if ([2015, 2016, 2017, 2018, 2019, 2023, 2026, 2099]
-        .contains(code)) {
+      Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()));
+    } else if ([2015, 2016, 2017, 2018, 2019, 2099, 2024].contains(code)) {
+      showErrorMessage(context, errorMessage);
+    } else if ([2024].contains(code)) {
+      Navigator.of(context)
+          .pushReplacement(MaterialPageRoute(builder: (_) => LoginScreen()));
+    }
+  }
+
+  Future<void> loginUser(
+      BuildContext context, String email, String otpCode) async {
+    final response = await http.post(
+      Uri.parse('$mainUrl/api/v1/auth/login/email/otp'),
+      body: jsonEncode(<String, String>{
+        'email': email,
+        'otp': otpCode,
+      }),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+    );
+
+    final Map<String, dynamic> responseBody = json.decode(response.body);
+    final success =
+        responseBody['success'] as bool; // Set your error message here
+    final int? code = responseBody['code'];
+
+    final errorMessage =
+        responseBody['message'] as String; // Set your error message here
+
+    if (success) {
+      Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()));
+    } else if ([2015, 2016, 2018, 2019, 2023, 2026, 2099].contains(code)) {
+      showErrorMessage(context, errorMessage);
+    } else if ([2017].contains(code)) {
+      showErrorMessage(context, errorMessage);
+      _resend = true;
+    }
+  }
+
+  Future<void> geetOtpCode(
+      BuildContext context,
+      String email,
+      String name,
+      String lastName,
+      String phoneNumber,
+      String cityId,
+      String birthDate) async {
+    final requestScheme = <String, String>{
+      'name': name,
+      'lastName': lastName,
+      'email': email,
+      'phoneNumber': phoneNumber,
+      'cityId': cityId,
+      'birthDate': birthDate,
+    };
+
+    final response = await http.post(
+      Uri.parse('$mainUrl/api/v1/auth/register/email'),
+      body: jsonEncode(requestScheme),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+      },
+    );
+
+    final Map<String, dynamic> responseBody = json.decode(response.body);
+
+    final errorMessage =
+        responseBody['message'] as String; // Set your error message here
+    final success =
+        responseBody['success'] as bool; // Set your error message here
+    final int? code = responseBody['code'];
+
+    if (success) {
+      showSendMessage(context, "OTP Code Send");
+      _resend = true;
+      _timer.cancel();
+    } else if ([2009, 2010, 2011, 2012, 2013, 2014].contains(code)) {
       showErrorMessage(context, errorMessage);
     }
   }
@@ -212,15 +278,17 @@ class CountdownTimerState extends State<CountdownTimer> {
             );
           }),
         ),
-        const Align(
+        Align(
             alignment: Alignment.center,
-            child: SizedBox(
-                width: 92,
-                height: 92,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
-                  strokeWidth: 5,
-                ))),
+            child: _resend
+                ? null
+                : const SizedBox(
+                    width: 92,
+                    height: 92,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
+                      strokeWidth: 5,
+                    ))),
         Align(
           alignment: const Alignment(0.0, -0.45),
           child: _resend
@@ -232,7 +300,16 @@ class CountdownTimerState extends State<CountdownTimer> {
                     ),
                     minimumSize: const Size(158, 60),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    geetOtpCode(
+                        context,
+                        widget.email,
+                        widget.responseBody!['name']!,
+                        widget.responseBody!['lastName']!,
+                        widget.responseBody!['phoneNumber']!,
+                        widget.responseBody!['cityId']!,
+                        widget.responseBody!['birthDate']!);
+                  },
                   child: const Text(
                     'Resend Code',
                     style: TextStyle(
@@ -247,9 +324,9 @@ class CountdownTimerState extends State<CountdownTimer> {
                     // Your onPressed logic here
                     // For example, you can navigate to a new screen or perform any action
                     widget.responseBody == null
-                        ? getOtpCodeEmail(
+                        ? loginUser(
                             context, widget.email, getAllTextFieldsValue())
-                        : getOtpCode(
+                        : registerUser(
                             context,
                             widget.email,
                             widget.responseBody!['name']!,
@@ -269,18 +346,20 @@ class CountdownTimerState extends State<CountdownTimer> {
         ),
         Align(
           alignment: Alignment.center,
-          child: SizedBox(
-            width: 72,
-            height: 48,
-            child: Text(
-              formattedTime,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 32.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white),
-            ),
-          ),
+          child: _resend
+              ? null
+              : SizedBox(
+                  width: 72,
+                  height: 48,
+                  child: Text(
+                    formattedTime,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 32.0,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
+                ),
         ),
         Container(
           alignment: const Alignment(0.0, 0.5),
