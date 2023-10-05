@@ -75,6 +75,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     } else if ([2009, 2010, 2011, 2012, 2013, 2014].contains(code)) {
       showErrorMessage(context, errorMessage);
+    } else {
+      showErrorMessage(context, errorMessage);
     }
   }
 

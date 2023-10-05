@@ -11,6 +11,19 @@ class LoginScreen extends StatelessWidget {
   LoginScreen({Key? key}) : super(key: key);
   final Logger logger = Logger();
 
+  void showErrorMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.red, // Customize the background color
+        duration: const Duration(seconds: 3), // Adjust the duration as needed
+      ),
+    );
+  }
+
   Future<void> getOtpCode(BuildContext context, String email) async {
     final response = await http.post(
       Uri.parse('$mainUrl/api/v1/auth/login/email'),
@@ -26,14 +39,14 @@ class LoginScreen extends StatelessWidget {
     final success =
         responseBody['success'] as bool; // Set your error message here
     final int? code = responseBody['code'];
+    final errorMessage =
+    responseBody['message'] as String; // Set your error message here
 
     if (success) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => OtpScreen(email, null)),
       );
     } else if ([2025, 2026].contains(code)) {
-      final errorMessage =
-          responseBody['message'] as String; // Set your error message here
       showErrorMessage(context, errorMessage);
     } else if ([2023].contains(code)) {
       Navigator.of(context).pushReplacement(
@@ -43,23 +56,12 @@ class LoginScreen extends StatelessWidget {
       final errorMessage =
           responseBody['message'] as String; // Set your error message here
       showErrorMessage(context, errorMessage);
+    } else {
+      showErrorMessage(context, errorMessage);
     }
   }
 
   final TextEditingController emailController = TextEditingController();
-
-  void showErrorMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.red, // Customize the background color
-        duration: const Duration(seconds: 3), // Adjust the duration as needed
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
