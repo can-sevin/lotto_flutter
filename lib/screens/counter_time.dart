@@ -94,12 +94,13 @@ class CountdownTimerState extends State<CountdownTimer> {
       },
     );
 
+
     final String responseContent = response.body;
     final Map<String, dynamic> responseBody = json.decode(responseContent);
-    final int? code = responseBody['code'];
-
-    final errorMessage = responseBody['message'] as String; // Set your error message here
     final success = responseBody['success'] as bool; // Set your error message here
+
+    final int? code = responseBody['code'];
+    final errorMessage = responseBody['message'] as String; // Set your error message here
     final data = responseBody['data']; // Set your error message here
     final token = data['token']; // Set your error message here
 

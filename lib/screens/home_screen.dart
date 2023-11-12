@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import 'package:lotto_flutter/screens/register_screen.dart';
 
 import '../constants.dart';
 
@@ -24,6 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
       PageController(viewportFraction: 0.8, initialPage: 0);
   int activePageTop = 0;
   int activePageBottom = 0;
+  int addBalance = 10000;
+  int balanceInfo = 0;
   late Map<String, dynamic> profileInfo;
 
   Future<void> getAllGames() async {
@@ -59,13 +62,57 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     final Map<String, dynamic> responseBody = json.decode(response.body);
-    final success =
-        responseBody['success'] as bool; // Set your error message here
+    final success = responseBody['success'] as bool; // Set your error message here
     final code = responseBody['code']; // Set your error message here
+    final data = responseBody['data']; // Set your error message here
 
     if (success) {
-      profileInfo = responseBody['data'];
-      print('Profileeeee: $responseBody');
+      profileInfo = data;
+    } else {
+      // Handle the error
+      print('Failed to fetch profile: $responseBody');
+    }
+  }
+
+  Future<void> getBalanceInfo() async {
+    final response = await http.post(
+      Uri.parse('$mainUrl/api/v1/balance'),
+      headers: <String, String>{
+        'Authorization': "Bearer ${widget.token}",
+        'Content-Type': 'application/json',
+      },
+    );
+
+    final Map<String, dynamic> responseBody = json.decode(response.body);
+    final success = responseBody['success'] as bool; // Set your error message here
+
+    if (success) {
+      print('balanceInfo:${responseBody['balance']}');
+      balanceInfo = responseBody['balance'];
+    } else {
+      // Handle the error
+      print('Failed to fetch profile: $responseBody');
+    }
+  }
+
+  Future<void> installBalance() async {
+    final response = await http.post(
+      Uri.parse('$mainUrl/api/v1/balance/add'),
+      headers: <String, String>{
+        'Authorization': "Bearer ${widget.token}",
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, int>{
+        'amount': addBalance,
+      }),
+    );
+
+    final Map<String, dynamic> responseBody = json.decode(response.body);
+    final success = responseBody['success'] as bool; // Set your error message here
+
+    if (success) {
+      addBalance = 0;
+      getBalanceInfo();
     } else {
       // Handle the error
       print('Failed to fetch profile: $responseBody');
@@ -89,6 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     getAllGames();
     getProfileInfo();
+    getBalanceInfo();
     _pageControllerTop = PageController(viewportFraction: 0.8);
     _pageControllerBottom = PageController(viewportFraction: 0.8);
     super.initState();
@@ -139,9 +187,8 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Padding(
               padding: const EdgeInsets.only(right: 20.0, top: 20.0),
               // Adjust the left margin as needed
-              child: Image.asset(
-                'assets/images/profilecircle.png',
-                fit: BoxFit.none,
+              child: Text(
+                '$balanceInfo Cr',
               ),
             ),
           ),
@@ -382,9 +429,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(right: 20.0, top: 20.0),
                 // Adjust the left margin as needed
-                child: Image.asset(
-                  'assets/images/profilecircle.png',
-                  fit: BoxFit.none,
+                child: Text(
+                  '$balanceInfo Cr',
                 ),
               ),
             ),
@@ -405,7 +451,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               TextButton(
-                                onPressed: () async {},
+                                onPressed: () async {
+                                  addBalance = 10000;
+                                },
                                 style: TextButton.styleFrom(
                                   backgroundColor: Colors.purpleAccent,
                                   shape: const RoundedRectangleBorder(
@@ -425,7 +473,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               TextButton(
-                                onPressed: () async {},
+                                onPressed: () async {
+                                  addBalance = 50000;
+                                },
                                 style: TextButton.styleFrom(
                                   backgroundColor: const Color(0xFF5C5C5C),
                                   shape: const RoundedRectangleBorder(
@@ -445,7 +495,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               TextButton(
-                                onPressed: () async {},
+                                onPressed: () async {
+                                  addBalance = 100000;
+                                },
                                 style: TextButton.styleFrom(
                                   backgroundColor: const Color(0xFF5C5C5C),
                                   shape: const RoundedRectangleBorder(
@@ -468,7 +520,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         Container(
                         margin: const EdgeInsets.only(top: 48.0),
                         child: TextButton(
-                          onPressed: () async {},
+                          onPressed: () async {
+                            installBalance();
+                          },
                           style: TextButton.styleFrom(
                             backgroundColor: Colors.purpleAccent,
                             shape: const RoundedRectangleBorder(
@@ -495,18 +549,28 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Align(
-                          alignment: Alignment.centerRight,
-                          child: Text('Edit Profile',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                                fontSize: 16,
-                              ))),
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.of(context)
+                                .pushReplacement(MaterialPageRoute(builder: (_) => RegisterScreen(profileInfo['email'])));
+                          },
+                          child: const Text(
+                            'Edit Profile',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              fontSize: 16,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ),
                       Container(
-                          margin: EdgeInsets.only(top: 12.0),
+                          margin: const EdgeInsets.only(top: 12.0),
                           child: Text(
-                            'name: CAN',
+                            'name:${profileInfo['name']}',
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontWeight: FontWeight.w600,
@@ -515,9 +579,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           )),
                       Container(
-                          margin: EdgeInsets.only(top: 12.0),
+                          margin: const EdgeInsets.only(top: 12.0),
                           child: Text(
-                            'surname: CAN',
+                            'lastname:${profileInfo['lastName']}',
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontWeight: FontWeight.w600,
@@ -526,9 +590,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           )),
                       Container(
-                          margin: EdgeInsets.only(top: 12.0),
+                          margin: const EdgeInsets.only(top: 12.0),
                           child: Text(
-                            'email: mahmutcansevin@yahoo.com',
+                            'email:${profileInfo['email']}',
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontWeight: FontWeight.w600,
@@ -537,9 +601,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           )),
                       Container(
-                          margin: EdgeInsets.only(top: 12.0),
+                          margin: const EdgeInsets.only(top: 12.0),
                           child: Text(
-                            'phoneNumber: 342243234',
+                            'phoneNumber:${profileInfo['phoneNumber']}',
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontWeight: FontWeight.w600,
@@ -548,9 +612,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           )),
                       Container(
-                          margin: EdgeInsets.only(top: 12.0),
+                          margin: const EdgeInsets.only(top: 12.0),
                           child: Text(
-                            'city: İstanbul',
+                            'city:${profileInfo['cityId']}',
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontWeight: FontWeight.w600,
@@ -559,9 +623,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           )),
                       Container(
-                          margin: EdgeInsets.only(top: 12.0),
+                          margin: const EdgeInsets.only(top: 12.0),
                           child: Text(
-                            'brithday: 15/03/1994',
+                            'birthDay:${profileInfo['birthDay']}',
                             style: const TextStyle(
                               fontFamily: 'Inter',
                               fontWeight: FontWeight.w600,
