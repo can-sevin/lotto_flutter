@@ -3,16 +3,18 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
-import 'package:lotto_flutter/screens/otp_screen.dart';
+import 'package:lotto_flutter/screens/home_screen.dart';
 
 import '../constants.dart';
 
-class RegisterScreen extends StatefulWidget {
-  final String email; // Declare email as an instance variable
-  const RegisterScreen(this.email,{Key? key}) : super(key: key);
+class ProfileEditScreen extends StatefulWidget {
+  final Map<String, dynamic> profileInfo;
+  final String token;
+
+  const ProfileEditScreen({required this.profileInfo, required this.token, Key? key}) : super(key: key);
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<ProfileEditScreen> createState() => _ProfileEditScreenState();
 }
 
 class City {
@@ -22,14 +24,18 @@ class City {
   City(this.id, this.name);
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _ProfileEditScreenState extends State<ProfileEditScreen> {
+  late Map<String, dynamic> profileInfo;
   List<City> cityList = [];
-  City? selectedCity;
+  //City? selectedCity;
+
   final TextEditingController _birthdayController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final Logger logger = Logger();
+
 
   void showErrorMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -44,44 +50,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Future<void> getOtpCode(BuildContext context, String email, String name, String lastName, String phoneNumber, String cityId, String birthDate) async {
-    final requestScheme = <String, String>{
-      'name': name,
-      'lastName': lastName,
-      'email': email,
-      'phoneNumber': phoneNumber,
-      'cityId': cityId,
-      'birthDate': birthDate,
-    };
-
-    final response = await http.post(
-      Uri.parse('$mainUrl/api/v1/auth/register/email'),
-      body: jsonEncode(requestScheme),
-      headers: <String, String>{
-        'Content-Type': 'application/json',
-      },
-    );
-
-
-    final Map<String, dynamic> responseBody = json.decode(response.body);
-
-    final errorMessage = responseBody['message'] as String; // Set your error message here
-    final success = responseBody['success'] as bool; // Set your error message here
-    final int? code = responseBody['code'];
-
-    if (success) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => OtpScreen(email, requestScheme)),
-      );
-    } else if ([2009, 2010, 2011, 2012, 2013, 2014].contains(code)) {
-      showErrorMessage(context, errorMessage);
-    } else {
-      showErrorMessage(context, errorMessage);
-    }
-  }
-
   Future<void> getCities() async {
-    // Replace your RESTful API here.
     String url = "$mainUrl/api/v1/cities";
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
@@ -102,9 +71,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  Future<void> updateProfile(Map<String, String> userInfo) async {
+    String url = "$mainUrl/api/v1/profile/user";
+    final response = await http.patch(
+      Uri.parse(url),
+      headers: <String, String>{
+        'Authorization': "Bearer ${widget.token}",
+      },
+      body: userInfo,
+    );
+    if (response.statusCode == 200) {
+      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => HomeScreen(widget.token)));
+    } else {
+      throw Exception('Failed updateProfile');
+    }
+  }
+
+  String findCityNameById(String id) {
+    try {
+      City city = cityList.firstWhere((city) => city.id == id);
+      return city.name;
+    } catch (e) {
+      return 'City not found';
+    }
+  }
+
   @override
   void initState() {
     getCities();
+    profileInfo = widget.profileInfo;
+    //selectedCity = City(profileInfo['cityId'], findCityNameById(profileInfo['cityId']));
     super.initState();
   }
 
@@ -136,17 +132,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     height: 49.0,
                     width: 320.0,
                     child: TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
+                      controller: _emailController,
+                      decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Enter your name',
-                        labelStyle: TextStyle(
+                        hintText: profileInfo['email'] ?? 'Enter your email',
+                        labelStyle: const TextStyle(
                             color: Color(0xFF5C5C5C),
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w500,
                             fontSize: 16),
-                        border: OutlineInputBorder(
+                        border: const OutlineInputBorder(
+                          borderRadius:
+                          BorderRadius.all(Radius.circular(10.0)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  alignment: const Alignment(0.0, -0.8),
+                  child: SizedBox(
+                    height: 49.0,
+                    width: 320.0,
+                    child: TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        hintText: profileInfo['name'] ?? 'Enter your name',
+                        labelStyle: const TextStyle(
+                            color: Color(0xFF5C5C5C),
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16),
+                        border: const OutlineInputBorder(
                           borderRadius:
                           BorderRadius.all(Radius.circular(10.0)),
                         ),
@@ -161,16 +181,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     width: 320.0,
                     child: TextFormField(
                       controller: _lastNameController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Enter your surname',
-                        labelStyle: TextStyle(
+                        hintText: profileInfo['lastName'] ?? 'Enter your lastname',
+                        labelStyle: const TextStyle(
                             color: Color(0xFF5C5C5C),
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w500,
                             fontSize: 16),
-                        border: OutlineInputBorder(
+                        border: const OutlineInputBorder(
                           borderRadius:
                           BorderRadius.all(Radius.circular(10.0)),
                         ),
@@ -185,16 +205,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     width: 320.0,
                     child: TextFormField(
                       controller: _phoneNumberController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Enter your phone',
-                        labelStyle: TextStyle(
+                        hintText: profileInfo['phoneNumber'] ?? 'Enter your phonenumber',
+                        labelStyle: const TextStyle(
                             color: Color(0xFF5C5C5C),
                             fontFamily: 'Inter',
                             fontWeight: FontWeight.w500,
                             fontSize: 16),
-                        border: OutlineInputBorder(
+                        border: const OutlineInputBorder(
                           borderRadius:
                           BorderRadius.all(Radius.circular(10.0)),
                         ),
@@ -202,7 +222,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
-                Container(
+                /*Container(
                   alignment: const Alignment(0.0, -0.2),
                   child: SizedBox(
                     height: 60.0,
@@ -214,17 +234,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           selectedCity = newValue;
                         });
                       },
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Select your city',
-                        labelStyle: TextStyle(
+                        hintText: findCityNameById(profileInfo['cityId']),
+                        labelStyle: const TextStyle(
                           color: Color(0xFF5C5C5C),
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w500,
                           fontSize: 16,
                         ),
-                        border: OutlineInputBorder(
+                        border: const OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(10.0)),
                         ),
                       ),
@@ -236,7 +256,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       }).toList(),
                     ),
                   ),
-                ),
+                ),*/
                 Container(
                   alignment: const Alignment(0.0, 0.0),
                   child: SizedBox(
@@ -244,17 +264,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     width: 320.0,
                     child: TextFormField(
                       controller: _birthdayController, // Add this line to connect the controller
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: 'Select birthday',
-                        labelStyle: TextStyle(
+                        hintText: profileInfo['birthDate'] ?? 'Select your brithday',
+                        labelStyle: const TextStyle(
                           color: Color(0xFF5C5C5C),
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w500,
                           fontSize: 16,
                         ),
-                        border: OutlineInputBorder(
+                        border: const OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(10.0)),
                         ),
                       ),
@@ -286,21 +306,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       minimumSize: const Size(320, 60),
                     ),
                     onPressed: () async {
-                      final String email = widget.email;
+                      final String email = _emailController.text;
                       final String name = _nameController.text;
                       final String lastName = _lastNameController.text;
                       final String phoneNumber = _phoneNumberController.text;
-                      final String city = selectedCity?.id ?? "";
+                      //final String city = selectedCity?.id ?? "";
                       final String birthDay = _birthdayController.text;
-                      if ([name, lastName, phoneNumber, city, birthDay].every((field) => field.isNotEmpty)) {
-                        await getOtpCode(context, email, name, lastName, phoneNumber, city, birthDay);
+                      Map<String, String> nonEmptyFields = {};
+
+                      if (email.isNotEmpty) nonEmptyFields['email'] = email;
+                      if (name.isNotEmpty) nonEmptyFields['name'] = name;
+                      if (lastName.isNotEmpty) nonEmptyFields['lastName'] = lastName;
+                      if (phoneNumber.isNotEmpty) nonEmptyFields['phoneNumber'] = phoneNumber;
+                      // if (city.isNotEmpty) nonEmptyFields['city'] = city;
+                      if (birthDay.isNotEmpty) nonEmptyFields['birthDay'] = birthDay;
+
+                      if (nonEmptyFields.isNotEmpty) {
+                        await updateProfile(nonEmptyFields);
                       } else {
-                        const errorMessage = "All fields must be filled"; // Set your error message here
+                        const errorMessage = "At least one field must be filled"; // Set your error message here
                         showErrorMessage(context, errorMessage);
                       }
                     },
                     child: const Text(
-                      'Submit',
+                      'Update',
                       style: TextStyle(
                           fontFamily: 'Inter',
                           fontWeight: FontWeight.w500,

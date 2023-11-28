@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lotto_flutter/screens/game_screen.dart';
 import 'package:lotto_flutter/screens/home_screen.dart';
 import 'package:lotto_flutter/screens/login_screen.dart';
 import 'package:lotto_flutter/screens/otp_screen.dart';
