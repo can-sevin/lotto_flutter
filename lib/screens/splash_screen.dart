@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:lotto_flutter/screens/game_screen.dart';
 import 'package:lotto_flutter/screens/home_screen.dart';
 import 'package:lotto_flutter/screens/login_screen.dart';
-import 'package:lotto_flutter/screens/otp_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);

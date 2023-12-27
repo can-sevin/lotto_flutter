@@ -22,6 +22,27 @@ class City {
   City(this.id, this.name);
 }
 
+class InputLabelDecoration extends StatelessWidget {
+  final String label;
+  final TextStyle textStyle;
+
+  const InputLabelDecoration({
+    required this.label,
+    required this.textStyle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        label,
+        style: textStyle,
+      ),
+    );
+  }
+}
+
 class _RegisterScreenState extends State<RegisterScreen> {
   List<City> cityList = [];
   City? selectedCity;
@@ -30,19 +51,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final Logger logger = Logger();
-
-  void showErrorMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.red, // Customize the background color
-        duration: const Duration(seconds: 3), // Adjust the duration as needed
-      ),
-    );
-  }
 
   Future<void> getOtpCode(BuildContext context, String email, String name, String lastName, String phoneNumber, String cityId, String birthDate) async {
     final requestScheme = <String, String>{
@@ -73,6 +81,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => OtpScreen(email, requestScheme)),
       );
+      showSendMessage(context, errorMessage);
     } else if ([2009, 2010, 2011, 2012, 2013, 2014].contains(code)) {
       showErrorMessage(context, errorMessage);
     } else {
@@ -95,8 +104,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() {
         cityList = cities;
       });
-
-      log('cities: $cityList');
     } else {
       throw Exception('Failed to load city data');
     }
@@ -133,146 +140,182 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Container(
                   alignment: const Alignment(0.0, -0.8),
                   child: SizedBox(
-                    height: 49.0,
+                    height: 90.0,
                     width: 320.0,
-                    child: TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: 'Enter your name',
-                        labelStyle: TextStyle(
-                            color: Color(0xFF5C5C5C),
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16),
-                        border: OutlineInputBorder(
-                          borderRadius:
-                          BorderRadius.all(Radius.circular(10.0)),
-                        ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const InputLabelDecoration(
+                            label: 'Name',
+                            textStyle: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: const InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              hintText: 'Enter your name',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
                 Container(
-                  alignment: const Alignment(0.0, -0.6),
+                  alignment: const Alignment(0.0, -0.55),
                   child: SizedBox(
-                    height: 49.0,
+                    height: 90.0,
                     width: 320.0,
-                    child: TextFormField(
-                      controller: _lastNameController,
-                      decoration: const InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: 'Enter your surname',
-                        labelStyle: TextStyle(
-                            color: Color(0xFF5C5C5C),
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16),
-                        border: OutlineInputBorder(
-                          borderRadius:
-                          BorderRadius.all(Radius.circular(10.0)),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const InputLabelDecoration(
+                          label: 'Lastname',
+                          textStyle: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ),
+                        TextFormField(
+                          controller: _lastNameController,
+                          decoration: const InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            hintText: 'Enter your lastname',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )),
                   ),
                 ),
                 Container(
-                  alignment: const Alignment(0.0, -0.4),
+                  alignment: const Alignment(0.0, -0.3),
                   child: SizedBox(
-                    height: 49.0,
+                    height: 90.0,
                     width: 320.0,
-                    child: TextFormField(
-                      controller: _phoneNumberController,
-                      decoration: const InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: 'Enter your phone',
-                        labelStyle: TextStyle(
-                            color: Color(0xFF5C5C5C),
-                            fontFamily: 'Inter',
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16),
-                        border: OutlineInputBorder(
-                          borderRadius:
-                          BorderRadius.all(Radius.circular(10.0)),
+                    child: SingleChildScrollView(
+                      child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const InputLabelDecoration(
+                          label: 'Phone Number',
+                          textStyle: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ),
+                        TextFormField(
+                          controller: _phoneNumberController,
+                          decoration: const InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            hintText: 'Enter your phone',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )),
                   ),
                 ),
                 Container(
-                  alignment: const Alignment(0.0, -0.2),
+                  alignment: const Alignment(0.0, -0.05),
                   child: SizedBox(
-                    height: 60.0,
+                    height: 90.0,
                     width: 320.0,
-                    child: DropdownButtonFormField<City>(
-                      value: selectedCity,
-                      onChanged: (City? newValue) {
-                        setState(() {
-                          selectedCity = newValue;
-                        });
-                      },
-                      decoration: const InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: 'Select your city',
-                        labelStyle: TextStyle(
-                          color: Color(0xFF5C5C5C),
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
+                    child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const InputLabelDecoration(
+                          label: 'City',
+                          textStyle: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                        DropdownButtonFormField<City>(
+                          value: selectedCity,
+                          onChanged: (City? newValue) {
+                            setState(() {
+                              selectedCity = newValue;
+                            });
+                          },
+                          decoration: const InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            hintText: 'Select your city',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                            ),
+                          ),
+                          items: cityList.map<DropdownMenuItem<City>>((City city) {
+                            return DropdownMenuItem<City>(
+                              value: city,
+                              child: Text(city.name),
+                            );
+                          }).toList(),
                         ),
-                      ),
-                      items: cityList.map<DropdownMenuItem<City>>((City city) {
-                        return DropdownMenuItem<City>(
-                          value: city,
-                          child: Text(city.name),
-                        );
-                      }).toList(),
-                    ),
+                      ],
+                    )),
                   ),
                 ),
                 Container(
-                  alignment: const Alignment(0.0, 0.0),
+                  alignment: const Alignment(0.0, 0.2),
                   child: SizedBox(
-                    height: 49.0,
+                    height: 90.0,
                     width: 320.0,
-                    child: TextFormField(
-                      controller: _birthdayController, // Add this line to connect the controller
-                      decoration: const InputDecoration(
-                        filled: true,
-                        fillColor: Colors.white,
-                        hintText: 'Select birthday',
-                        labelStyle: TextStyle(
-                          color: Color(0xFF5C5C5C),
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
+                    child: SingleChildScrollView(
+                      child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const InputLabelDecoration(
+                          label: 'Your Birthday',
+                          textStyle: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                        TextFormField(
+                          controller: _birthdayController, // Add this line to connect the controller
+                          decoration: const InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            hintText: 'Select birthday',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                            ),
+                          ),
+                          onTap: () async {
+                            DateTime? selectedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime(2000),
+                              firstDate: DateTime(1990),
+                              lastDate: DateTime(2005),
+                            );
+                            if (selectedDate != null) {
+                              setState(() {
+                                _birthdayController.text =
+                                "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
+                              });
+                            }
+                          },
                         ),
-                      ),
-                      onTap: () async {
-                        DateTime? selectedDate = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime(2000),
-                          firstDate: DateTime(1990),
-                          lastDate: DateTime(2005),
-                        );
-                        if (selectedDate != null) {
-                          setState(() {
-                            _birthdayController.text =
-                            "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}";
-                          });
-                        }
-                      },
-                    ),
+                      ],
+                    )),
                   ),
                 ),
                 Container(

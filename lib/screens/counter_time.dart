@@ -42,32 +42,6 @@ class CountdownTimerState extends State<CountdownTimer> {
   late Timer _timer;
   bool _resend = false;
 
-  void showErrorMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.red, // Customize the background color
-        duration: const Duration(seconds: 3), // Adjust the duration as needed
-      ),
-    );
-  }
-
-  void showSendMessage(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.green, // Customize the background color
-        duration: const Duration(seconds: 3), // Adjust the duration as needed
-      ),
-    );
-  }
-
   Future<void> registerUser(
       BuildContext context,
       String email,
@@ -78,46 +52,41 @@ class CountdownTimerState extends State<CountdownTimer> {
       String birthDate,
       String otpCode) async {
     try {
-    final response = await http.post(
-      Uri.parse('$mainUrl/api/v1/auth/register/email/otp'),
-      body: jsonEncode(<String, String>{
-        'name': name,
-        'lastName': lastName,
-        'email': email,
-        'phoneNumber': phoneNumber,
-        'cityId': cityId,
-        'birthDate': birthDate,
-        'otp': otpCode,
-      }),
-      headers: <String, String>{
-        'Content-Type': 'application/json',
-      },
-    );
+      final response = await http.post(
+        Uri.parse('$mainUrl/api/v1/auth/register/email/otp'),
+        body: jsonEncode(<String, String>{
+          'name': name,
+          'lastName': lastName,
+          'email': email,
+          'phoneNumber': phoneNumber,
+          'cityId': cityId,
+          'birthDate': birthDate,
+          'otp': otpCode,
+        }),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+        },
+      );
 
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseBody = json.decode(response.body);
+        final success = responseBody['success'] as bool;
+        final int? code = responseBody['code'];
+        final errorMessage = responseBody['message'] as String;
+        final token = responseBody['token'];
 
-    final String responseContent = response.body;
-    final Map<String, dynamic> responseBody = json.decode(responseContent);
-    final success = responseBody['success'] as bool; // Set your error message here
-
-    final int? code = responseBody['code'];
-    final errorMessage = responseBody['message'] as String; // Set your error message here
-    final data = responseBody['data']; // Set your error message here
-    final token = data['token']; // Set your error message here
-
-    if (success) {
-      Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => HomeScreen(token)));
-    } else if ([2015, 2016, 2017, 2018, 2019, 2099, 2024].contains(code)) {
-      showErrorMessage(context, errorMessage);
-      _resend = true;
-      _secondsRemaining = 180;
-    } else if ([2024].contains(code)) {
-      Navigator.of(context)
-          .pushReplacement(MaterialPageRoute(builder: (_) => LoginScreen()));
-    } else {
-      showErrorMessage(context, errorMessage);
-    }
-  } catch (e) {
+        // Process the response data based on your logic
+        if (success) {
+          // Handle success
+        } else {
+          // Handle failure
+          print('Error Code: $code, Message: $errorMessage');
+        }
+      } else {
+        // Handle non-200 status code
+        print('Unexpected status code: ${response.statusCode}');
+      }
+    } catch (e) {
       // Handle other exceptions
       print('Error: $e');
       // Handle the error gracefully
@@ -150,6 +119,7 @@ class CountdownTimerState extends State<CountdownTimer> {
       final tokenInfo = data['token'];
       Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => HomeScreen(tokenInfo)));
+      showSendMessage(context, errorMessage);
     } else if ([2015, 2016, 2017, 2018, 2019, 2099].contains(code)) {
       showErrorMessage(context, errorMessage);
       _resend = true;
@@ -178,7 +148,7 @@ class CountdownTimerState extends State<CountdownTimer> {
         responseBody['message'] as String; // Set your error message here
 
     if (success) {
-      showSendMessage(context, "OTP Code Send");
+      showSendMessage(context, errorMessage);
       _resend = false;
       _secondsRemaining = 180;
     } else if ([2025, 2026].contains(code)) {
@@ -230,7 +200,7 @@ class CountdownTimerState extends State<CountdownTimer> {
     final int? code = responseBody['code'];
 
     if (success) {
-      showSendMessage(context, "OTP Code Send");
+      showSendMessage(context, errorMessage);
       _resend = false;
       _secondsRemaining = 180;
     } else if ([2009, 2010, 2011, 2012, 2013, 2014].contains(code)) {
